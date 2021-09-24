@@ -11,7 +11,13 @@ dotenv.config();
 createConnection().then(async connection => {
     await Access.load();
     const app = express();
-    app.use(cors())
+    const corsOptions = {
+        origin : process.env.CORS_ORIGIN!,
+        credentials : true,
+        optionsSuccessStatus : 200
+    }
+
+    app.use(cors(corsOptions));
     app.use(express.json());
     app.use(cookieParser());
 
