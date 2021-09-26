@@ -10,11 +10,11 @@ export default class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index({ unique: true })
+  //@Index({ unique: true })
   @Column({ type: 'uuid', unique: true, nullable: false })
   ukey: string;
 
-  @Index({ unique: true })
+  //@Index({ unique: true })
   @Column({ nullable: false, length: 50, unique: true })
   email: string;
 
@@ -36,18 +36,22 @@ export default class User {
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt?: Date;
 
-  constructor(email: string, password: string, refreshIndex: number) {
+  @Column({ nullable : true, length: 200})
+  username: string;
+
+  constructor(email: string, password: string, refreshIndex: number, username: string) {
     this.id = 0;
     this.ukey = "";
     this.email = email;
     this.password = password;
-    this.confirmed = true;
+    this.confirmed = false;
     this.refreshIndex = refreshIndex;
     this.createdAt = new Date();
     this.updatedAt = new Date();
+    this.username = username;
   }
 
-  static async register(email: string, password: string, confirmation: string): Promise<Result<User>> {
+  static async register(email: string, password: string, confirmation: string, username:string): Promise<Result<User>> {
     if (password != confirmation)
       return new Result<User>(new Error('Passwords do not match'), 400);
 
@@ -57,7 +61,7 @@ export default class User {
 
     try {
       const hpass = await hash(password, 12);
-      const user = new User(email, hpass, 0);
+      const user = new User(email, hpass, 0, username);
       user.ukey = uuidv4();
       if (await user.save())
         return new Result<User>(user, 201);

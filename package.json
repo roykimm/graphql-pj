@@ -8,14 +8,15 @@
     "start": "node dist/app.js",
     "dev": "nodemon src/app.ts",
     "build": "tsc -p .",
-    "migrate" : "ts-node ./node_modules/typeorm/cli.js migration:run",
-    "revert" : "ts-node ./node_modules/typeorm/cli.js migration:revert",
-    "initdb" : "dropdb graphql; createdb -E UTF8 graphql;"
+    "migrate": "ts-node ./node_modules/typeorm/cli.js migration:run",
+    "revert": "ts-node ./node_modules/typeorm/cli.js migration:revert",
+    "initdb": "dropdb graphql; createdb -E UTF8 graphql;"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@sendgrid/mail": "^7.4.7",
     "@types/bcryptjs": "^2.4.2",
     "@types/cookie-parser": "^1.4.2",
     "@types/cors": "^2.8.12",
@@ -23,7 +24,6 @@
     "@types/express": "^4.17.13",
     "@types/express-graphql": "^0.9.0",
     "@types/graphql": "^14.5.0",
-    "@types/jsonwebtoken": "^8.5.5",
     "@types/node": "^16.9.6",
     "@types/pg": "^8.6.1",
     "@types/uuid": "^8.3.1",
@@ -42,6 +42,7 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^8.5.1",
     "nodemon": "^2.0.12",
     "ts-node": "^10.2.1",
     "typescript": "^4.4.3"

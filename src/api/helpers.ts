@@ -54,9 +54,20 @@ export async function handleSendEmailRequest(email: string, res: Response, isCon
     throw new Error('Server error');
   }
 
-  isConfirmation ? Mailer.sendConfirmation(user.email, token) : Mailer.sendForgotPassword(user.email, token);
+  // isConfirmation ? Mailer.sendConfirmation(user.email, token) : Mailer.sendForgotPassword(user.email, token);
+  // res.status(200);
+  // return { tmp_email_token: token };
+
+  const success = await (isConfirmation? Mailer.sendConfirmation(user.email, token) : Mailer.sendForgotPassword(user.email, token));
+
+  if(!success) {
+    console.log('resend error!');
+    res.status(500);
+    throw new Error('Server error!!!');
+  }
+
   res.status(200);
-  return { tmp_email_token: token };
+  return true;
 }
 
 export async function handlePasswordChange(oldPassword: string | undefined, newPassword: string, confirmation: string, req: Request, res: Response, accessId: number): Promise<boolean> {
