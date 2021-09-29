@@ -62,7 +62,7 @@ export default class Memo {
     static async getMemoByEmail(email: string): Promise<Memo | undefined> {
         const db = new Database<Memo>(Memo);
         return await db.get({ email });
-      }
+    }
 
     static async memoUpdate(id: number, title: string | undefined, content: string | undefined) : Promise<Result<boolean>> {
         const values = { title: title, content : content };

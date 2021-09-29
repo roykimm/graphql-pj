@@ -1,13 +1,47 @@
 import { buildSchema } from 'graphql';
 import User from '../entity/user';
 import Memo from '../entity/memo';
+import Gallery from '../entity/gallery';
 import { parseAccessToken, setRefreshTokenCookie, handlePasswordChange, handleSendEmailRequest } from './helpers';
 import Mailer from '../utils/mailer';
 import Access from '../entity/access';
 
+const path = require('path');
+const fs = require('fs');
+const mime = require('mime');
+
 export const schema = buildSchema(`
+  scalar Upload
+
+  type Profile {
+    ukey: ID
+    email: String
+    username : String
+  }
+
+  type MemoProfile {
+    id : Int
+    email : String
+    username : String
+    title : String
+    content : String
+  }
+
+  type GalleryProfile {
+    id : Int
+    username : String
+    filename : String
+    sort : String
+  }
+
+  type File {
+    url: String!
+  }
+
   type Query {
     profile: Profile
+    memoProfile : MemoProfile
+    galleryProfile : GalleryProfile
     test(email: String!): Profile
   }
   type Mutation {
@@ -22,21 +56,11 @@ export const schema = buildSchema(`
 
     memoRegister(email:String!, username:String!, title: String!, content: String!) :Boolean
     memoUpdate(id:ID!, title: String!, content: String!): Boolean
-  }
-  type Profile {
-    ukey: ID
-    email: String
-    username : String
+
+    galleryRegister(username:String!, filename:String!, sort:String!) : Boolean 
+    uploadFile(file: Upload!): File!
   }
 
-  type MemoProfile {
-    id : Int
-    email : String
-    username : String
-    title : String
-    content : String
-  }
-  
   type AccessToken {
     ukey: ID
     access_token: ID
@@ -44,10 +68,43 @@ export const schema = buildSchema(`
   
 `);
 
+function generateRamdomString(length) {
+  var result           = '';
+  var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var charactersLength = characters.length;
+  for ( var i = 0; i < length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
+
 export const root = {
   test : async({email} : {email:string}, context: any) => {
     const user = await User.getByEmail(email);
     return user;
+  },
+
+  uploadFile: async ({ file } : { file : File}, context: any) => {
+    const { createReadStream, filename, mimetype, encoding } = await file;
+
+    const { ext, name } = path.parse(filename);
+    const randomName = generateRamdomString(12) + ext;
+
+    const stream = createReadStream();
+    const pathName = path.join(__dirname, `/public/images/${randomName}`)
+    await stream.pipe(fs.createWriteStream(pathName));
+
+    return {
+        url : `http://localhost:4000/images/${randomName}`
+    }
+  },
+
+  galleryRegister : async ({username, filename, sort}: {username:string, filename: string, sort: string}, context: any) => {
+    const result = await Gallery.galleryRegister(username, filename, sort);
+    if(result.isError()){
+      throw result.getError()!
+    }
+    return true;
   },
 
   memoRegister : async ({ email, username, title, content }: { email: string, username: string, title: string , content: string}, context: any) => {

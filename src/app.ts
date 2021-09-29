@@ -10,7 +10,6 @@ import Access from './entity/access';
 import { schema, root} from './api/schema';
 import { createConnection } from 'typeorm';
 
-
 createConnection().then(async connection => {
     await Access.load();
     const app = express();
@@ -23,6 +22,8 @@ createConnection().then(async connection => {
     app.use(cors(corsOptions));
     app.use(express.json());
     app.use(cookieParser());
+
+    app.use(express.static('public'));
 
     app.use(process.env.GRAPHQL_PATH!, graphqlHTTP((request, response, graphQLParams) => ({
         schema: schema,
