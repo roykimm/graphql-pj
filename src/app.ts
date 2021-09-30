@@ -6,9 +6,16 @@ import {graphqlHTTP} from 'express-graphql';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import Access from './entity/access';
+import logger from 'morgan';
 
 import { schema, root} from './api/schema';
 import { createConnection } from 'typeorm';
+
+const {
+    GraphQLUpload,
+    graphqlUploadExpress, // A Koa implementation is also exported.
+  } = require('graphql-upload');
+
 
 createConnection().then(async connection => {
     await Access.load();
@@ -22,6 +29,8 @@ createConnection().then(async connection => {
     app.use(cors(corsOptions));
     app.use(express.json());
     app.use(cookieParser());
+    app.use(logger('dev'));
+    app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
 
     app.use(express.static('public'));
 

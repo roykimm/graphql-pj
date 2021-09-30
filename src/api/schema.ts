@@ -5,6 +5,8 @@ import Gallery from '../entity/gallery';
 import { parseAccessToken, setRefreshTokenCookie, handlePasswordChange, handleSendEmailRequest } from './helpers';
 import Mailer from '../utils/mailer';
 import Access from '../entity/access';
+import { Stream } from 'stream';
+import { GraphQLUpload } from 'graphql-upload';
 
 const path = require('path');
 const fs = require('fs');
@@ -68,7 +70,7 @@ export const schema = buildSchema(`
   
 `);
 
-function generateRamdomString(length) {
+function generateRamdomString(length : number) {
   var result           = '';
   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   var charactersLength = characters.length;
@@ -78,15 +80,26 @@ function generateRamdomString(length) {
   return result;
 }
 
+interface Upload {
+  filename: string;
+  mimetype: string;
+  encoding: string;
+  createReadStream: () => Stream;
+}
+
 export const root = {
   test : async({email} : {email:string}, context: any) => {
     const user = await User.getByEmail(email);
     return user;
   },
+  Upload: GraphQLUpload,
 
-  uploadFile: async ({ file } : { file : File}, context: any) => {
+  uploadFile: async ({ file } : { file : any}, context: any) => {
+    console.log('uploadFile')
+    console.log(file)
     const { createReadStream, filename, mimetype, encoding } = await file;
 
+    console.log("filename : " + filename)
     const { ext, name } = path.parse(filename);
     const randomName = generateRamdomString(12) + ext;
 
@@ -95,7 +108,7 @@ export const root = {
     await stream.pipe(fs.createWriteStream(pathName));
 
     return {
-        url : `http://localhost:4000/images/${randomName}`
+        url : `http://localhost:5000/images/${randomName}`
     }
   },
 
