@@ -11,10 +11,7 @@ import logger from 'morgan';
 import { schema, root} from './api/schema';
 import { createConnection } from 'typeorm';
 
-const {
-    GraphQLUpload,
-    graphqlUploadExpress, // A Koa implementation is also exported.
-  } = require('graphql-upload');
+import { GraphQLUpload,graphqlUploadExpress } from 'graphql-upload'
 
 
 createConnection().then(async connection => {
@@ -30,19 +27,21 @@ createConnection().then(async connection => {
     app.use(express.json());
     app.use(cookieParser());
     app.use(logger('dev'));
-    app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
 
     app.use(express.static('public'));
 
-    app.use(process.env.GRAPHQL_PATH!, graphqlHTTP((request, response, graphQLParams) => ({
+    app.use(
+        process.env.GRAPHQL_PATH!, 
+        graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }),
+        graphqlHTTP((request, response, graphQLParams) => ({
         schema: schema,
         rootValue : root,
         graphiql: true,
         context : {
             req : request,
             res : response,
-        }
-    })));
+        }})),
+    );
 
     app.listen(parseInt(process.env.APP_PORT!));
     const link = `http://localhost:${process.env.APP_PORT!}${process.env.GRAPHQL_PATH}`;

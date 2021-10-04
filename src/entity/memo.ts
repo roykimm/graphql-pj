@@ -9,7 +9,7 @@ export default class Memo {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({nullable: false, length:50, unique: true})
+    @Column({nullable: false, length:50})
     email : string;
 
     @Column({ nullable : true, length: 200})
@@ -61,6 +61,7 @@ export default class Memo {
 
     static async getMemoByEmail(email: string): Promise<Memo | undefined> {
         const db = new Database<Memo>(Memo);
+        console.log(db)
         return await db.get({ email });
     }
 

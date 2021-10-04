@@ -37,15 +37,18 @@ export const schema = buildSchema(`
   }
 
   type File {
-    url: String!
+    filename : String!
+    mimetype : String!
+    encoding : String!
   }
 
   type Query {
     profile: Profile
-    memoProfile : MemoProfile
+    memoProfile(email: String!) : [MemoProfile!]!
     galleryProfile : GalleryProfile
     test(email: String!): Profile
   }
+
   type Mutation {
     register(email: String!, password: String!, confirmation: String!, username:String!): Boolean
     login(email: String!, password: String!): AccessToken
@@ -60,12 +63,14 @@ export const schema = buildSchema(`
     memoUpdate(id:ID!, title: String!, content: String!): Boolean
 
     galleryRegister(username:String!, filename:String!, sort:String!) : Boolean 
-    uploadFile(file: Upload!): File!
+    uploadFile(file: Upload!): Boolean
   }
 
   type AccessToken {
     ukey: ID
     access_token: ID
+    email: String
+    username : String
   }
   
 `);
@@ -80,36 +85,31 @@ function generateRamdomString(length : number) {
   return result;
 }
 
-interface Upload {
-  filename: string;
-  mimetype: string;
-  encoding: string;
-  createReadStream: () => Stream;
-}
 
 export const root = {
+  Upload: GraphQLUpload,
   test : async({email} : {email:string}, context: any) => {
     const user = await User.getByEmail(email);
     return user;
   },
-  Upload: GraphQLUpload,
-
-  uploadFile: async ({ file } : { file : any}, context: any) => {
+  
+  uploadFile: async (root : any, {file} : {file : any}) => {
     console.log('uploadFile')
     console.log(file)
-    const { createReadStream, filename, mimetype, encoding } = await file;
+    // const { createReadStream, filename, mimetype, encoding } = await file.file;
 
-    console.log("filename : " + filename)
-    const { ext, name } = path.parse(filename);
-    const randomName = generateRamdomString(12) + ext;
+    // console.log("filename : " + filename)
+    // const { ext, name } = path.parse(filename);
+    // const randomName = generateRamdomString(12) + ext;
 
-    const stream = createReadStream();
-    const pathName = path.join(__dirname, `/public/images/${randomName}`)
-    await stream.pipe(fs.createWriteStream(pathName));
+    // const stream = createReadStream();
+    // const pathName = path.join(__dirname, `../../public/images/${randomName}`)
+    // await stream.pipe(fs.createWriteStream(pathName));
 
-    return {
-        url : `http://localhost:5000/images/${randomName}`
-    }
+    // return {
+    //     url : `http://localhost:5000/images/${randomName}`
+    // }
+    return true;
   },
 
   galleryRegister : async ({username, filename, sort}: {username:string, filename: string, sort: string}, context: any) => {
@@ -125,6 +125,12 @@ export const root = {
     if (result.isError())
       throw result.getError()!
     return true;
+  },
+
+  memoProfile : async({email} : {email:string}, context: any) => {
+    const memo = await Memo.getMemoByEmail(email);
+    console.log(memo)
+    return memo;
   },
 
   register: async ({ email, password, confirmation, username }: { email: string, password: string, confirmation: string , username: string}, context: any) => {
@@ -199,7 +205,7 @@ export const root = {
     setRefreshTokenCookie(context.res, refreshToken);
     context.res.status(200);
 
-    return { ukey: user.ukey, refresh_token: refreshToken, access_token: accessToken };
+    return { ukey: user.ukey, refresh_token: refreshToken, access_token: accessToken , email : user.email, username: user.username};
   },
 
   profile: async ({ }: {}, context: any) => {
@@ -264,17 +270,17 @@ export const root = {
 
   logout: async ({ }: {}, context: any) => {
     const result = parseAccessToken(context.req, Access.idFromName(process.env.ACCESS_TYPE_USER!));
-    context.res.status(401);
-    if (result.isError())
-      throw new Error('Not authorized');
+    // context.res.status(401);
+    // if (result.isError())
+    //   throw new Error('Not authorized');
 
-    const token = context.req.cookies[process.env.REFRESH_TOKEN_NAME!];
-    if (token == undefined)
-      throw new Error('Not authorized');
+    // const token = context.req.cookies[process.env.REFRESH_TOKEN_NAME!];
+    // if (token == undefined)
+    //   throw new Error('Not authorized');
 
-    const claims = Access.decode(token, Access.idFromName(process.env.ACCESS_TYPE_REFRESH!));
-    if (claims == undefined)
-      throw new Error('Not authorized');
+    // const claims = Access.decode(token, Access.idFromName(process.env.ACCESS_TYPE_REFRESH!));
+    // if (claims == undefined)
+    //   throw new Error('Not authorized');
 
     context.res.status(200);
     context.res.clearCookie(process.env.REFRESH_TOKEN_NAME!);
